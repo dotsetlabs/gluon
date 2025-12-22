@@ -137,12 +137,15 @@ export async function getAccessToken(): Promise<string> {
 }
 
 /**
- * Saves credentials
+ * Saves credentials securely with restricted file permissions
  */
 export async function saveCredentials(credentials: GluonCredentials): Promise<void> {
     const credPath = getCredentialsPath();
-    await mkdir(dirname(credPath), { recursive: true });
-    await writeFile(credPath, JSON.stringify(credentials, null, 2), 'utf8');
+    await mkdir(dirname(credPath), { recursive: true, mode: 0o700 });
+    await writeFile(credPath, JSON.stringify(credentials, null, 2), {
+        encoding: 'utf8',
+        mode: 0o600, // Owner read/write only - matches Axion pattern
+    });
 }
 
 /**
