@@ -45,7 +45,7 @@ gln run -- npm start
 When integrated with Axion:
 ```
 ⚠️ ALERT: Secret 'STRIPE_SECRET_KEY' from Axion project 'payments-api'
-   was detected in stdout at 2024-01-15 14:32:01 UTC
+   was detected in stdout at 2025-01-15 14:32:01 UTC
    
    Context: ...Processing payment with sk_live_****...
 ```
@@ -140,7 +140,7 @@ When Gluon detects an Axion project (`.axion/` directory):
 | Plan | Price | Includes |
 |:-----|:------|:---------|
 | **Free** | $0 | 3 projects, 14-day retention, 12 secret patterns |
-| **Pro** | $10/mo or $95/yr | Unlimited projects, 30-day retention, custom patterns, cloud sync |
+| **Pro** | $10/mo or $96/yr | Unlimited projects, 30-day retention, custom patterns, cloud sync |
 | **Business** | $25/mo or $240/yr | 90-day retention, SBOM export, webhooks |
 
 ### Feature Comparison
@@ -285,10 +285,6 @@ Part of the **dotset labs** particle physics product family:
 - [x] Local web dashboard
 - [x] Gluon Cloud for teams
 - [ ] Multi-language support (Python, Go)
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
