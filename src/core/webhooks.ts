@@ -153,7 +153,7 @@ function formatDiscordPayload(event: TelemetryEvent, projectName: string): objec
                 { name: 'Session', value: `\`${event.sessionId}\``, inline: false },
             ],
             timestamp: event.timestamp,
-            footer: { text: 'Gluon Security by Dotset Labs' },
+            footer: { text: 'Gluon Security by dotset labs' },
         }],
     };
 }

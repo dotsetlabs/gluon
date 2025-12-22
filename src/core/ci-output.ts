@@ -163,7 +163,7 @@ export function generateSarif(
             tool: {
                 driver: {
                     name: 'Gluon',
-                    organization: 'Dotset Labs',
+                    organization: 'dotset labs',
                     version: '1.0.0',
                     informationUri: 'https://dotsetlabs.com/gluon',
                     rules: [...rulesUsed.values()],
