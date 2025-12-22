@@ -587,31 +587,6 @@ program
         }
     });
 
-/**
- * Dashboard Command
- * Launch local development dashboard
- */
-program
-    .command('dashboard')
-    .description('Launch local development dashboard')
-    .option('-p, --port <port>', 'Port to run dashboard on', '3333')
-    .action(async (options: { port: string }) => {
-        try {
-            if (!(await isInitialized())) {
-                error('Project not initialized. Run "gln init" first.');
-            }
-
-            const port = parseInt(options.port, 10);
-
-            info(`Dashboard coming soon! Will run on port ${port}.`);
-            console.log();
-            console.log('For now, use these commands to view telemetry:');
-            console.log(`  ${colors.cyan('gln status')} - View summary and recent events`);
-            console.log(`  ${colors.cyan('gln status -n 50')} - View more events`);
-        } catch (err) {
-            error((err as Error).message);
-        }
-    });
 
 /**
  * SBOM Command
