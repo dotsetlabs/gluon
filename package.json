@@ -1,0 +1,81 @@
+{
+  "name": "@dotsetlabs/gluon",
+  "version": "1.0.0",
+  "description": "Runtime Security Telemetry for Modern Applications. Detect secret leaks, track network activity, and monitor runtime behavior without changing your code.",
+  "type": "module",
+  "main": "dist/cli.js",
+  "exports": {
+    ".": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    },
+    "./runner": {
+      "types": "./dist/core/runner.d.ts",
+      "import": "./dist/core/runner.js"
+    },
+    "./telemetry": {
+      "types": "./dist/core/telemetry.d.ts",
+      "import": "./dist/core/telemetry.js"
+    },
+    "./monitors": {
+      "types": "./dist/monitors/index.d.ts",
+      "import": "./dist/monitors/index.js"
+    }
+  },
+  "bin": {
+    "gln": "./bin/gln.js"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:all": "npm test && npm run test:integration",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "security",
+    "telemetry",
+    "monitoring",
+    "runtime",
+    "secrets",
+    "observability",
+    "cli",
+    "devtools"
+  ],
+  "author": "dotset labs <hello@dotsetlabs.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotsetlabs/gluon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dotsetlabs/gluon/issues"
+  },
+  "homepage": "https://dotsetlabs.com/gluon",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.2",
+    "execa": "^9.5.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
