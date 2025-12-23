@@ -7,9 +7,10 @@
  * Note: This is a stub for future implementation.
  */
 
-import { readFile, writeFile, mkdir, access, constants } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, access, constants, unlink } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { CONFIG_DIR } from '../core/config.js';
+import { cloudClient } from './client.js';
 
 /** Credentials storage filename */
 const CREDENTIALS_FILE = 'credentials.json';
@@ -90,7 +91,6 @@ export async function loadCredentials(): Promise<GluonCredentials | null> {
  * Refreshes the access token using the stored refresh token
  */
 async function refreshAccessToken(refreshToken: string): Promise<GluonCredentials> {
-    const { cloudClient } = await import('./client.js');
     const response = await cloudClient.refreshTokens(refreshToken);
 
     const credentials = await loadCredentials();
@@ -153,7 +153,6 @@ export async function saveCredentials(credentials: GluonCredentials): Promise<vo
  */
 export async function clearCredentials(): Promise<void> {
     try {
-        const { unlink } = await import('node:fs/promises');
         await unlink(getCredentialsPath());
     } catch {
         // Ignore if file doesn't exist
@@ -211,7 +210,6 @@ export async function saveCloudConfig(workDir: string, config: CloudConfig): Pro
  */
 export async function unlinkCloud(workDir: string = process.cwd()): Promise<void> {
     try {
-        const { unlink } = await import('node:fs/promises');
         await unlink(getCloudConfigPath(workDir));
     } catch {
         // Ignore if file doesn't exist

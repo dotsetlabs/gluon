@@ -17,8 +17,8 @@
  */
 
 import { Command } from 'commander';
-import { basename } from 'node:path';
-import { writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
+import { writeFile, readFile } from 'node:fs/promises';
 import {
     loadConfig,
     saveConfig,
@@ -26,8 +26,7 @@ import {
     isInitialized,
     getConfigDir,
     getTierLimits,
-    isFeatureAllowed,
-    TIER_LIMITS,
+    createDefaultConfig,
     type GluonConfig,
 } from './core/config.js';
 import {
@@ -229,7 +228,6 @@ program
                     info(`Run ${colors.cyan('gln init')} to create a configuration file.`);
                     console.log();
                 }
-                const { createDefaultConfig } = await import('./core/config.js');
                 config = createDefaultConfig();
             }
 
@@ -607,9 +605,6 @@ program
                 info('Generating static SBOM from package.json...');
 
                 try {
-                    const { readFile } = await import('node:fs/promises');
-                    const { join } = await import('node:path');
-
                     const packageJsonPath = join(process.cwd(), 'package.json');
                     const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
 
