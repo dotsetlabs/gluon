@@ -163,22 +163,30 @@ describe('Gluon CLI Integration Tests', () => {
     describe('gln sbom', () => {
         beforeEach(async () => {
             await project.run('init');
+            // Create a package.json for static SBOM generation
+            await project.writeFile('package.json', JSON.stringify({
+                name: 'test-project',
+                version: '1.0.0',
+                dependencies: {
+                    'lodash': '^4.17.21'
+                }
+            }, null, 2));
         });
 
         it('should generate SBOM in CycloneDX format', async () => {
             const result = await project.run('sbom', '--static', '--format', 'cyclonedx');
 
             expect(result.exitCode).toBe(0);
-            // Static SBOM without package.json will show info message
-            expect(result.all).toBeDefined();
+            expect(result.all).toContain('bomFormat');
+            expect(result.all).toContain('lodash');
         });
 
         it('should generate SBOM in SPDX format', async () => {
             const result = await project.run('sbom', '--static', '--format', 'spdx');
 
             expect(result.exitCode).toBe(0);
-            // Static SBOM without package.json will show info message
-            expect(result.all).toBeDefined();
+            expect(result.all).toContain('spdxVersion');
+            expect(result.all).toContain('lodash');
         });
     });
 
