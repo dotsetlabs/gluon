@@ -51,10 +51,8 @@ import {
     removeModuleHooks,
     generateSBOM,
     generateSPDX,
-    getLoadedModules,
     getModuleStats,
 } from './monitors/module-hooks.js';
-import { detectAxion, updateAxionIntegration, getAxionInfo } from './integrations/axion.js';
 
 const program = new Command();
 
@@ -119,7 +117,7 @@ program
     .action(async (options: { name?: string; cloud?: boolean }) => {
         try {
             if (await isInitialized()) {
-                error('Project already initialized. Delete .gluon/ to reinitialize.');
+                error('Project already initialized. Delete .dotset/gluon/ to reinitialize.');
             }
 
             const projectName = options.name ?? basename(process.cwd());
@@ -143,18 +141,11 @@ program
                 });
             }
 
-            let config = await initConfig(projectName);
-
-            // Check for Axion integration
-            const axionDetected = await detectAxion();
-            if (axionDetected) {
-                config = await updateAxionIntegration(config);
-                await saveConfig(config);
-            }
+            const config = await initConfig(projectName);
 
             success('Gluon project initialized!');
             console.log();
-            info(`Configuration saved to ${colors.cyan('.gluon/config.yaml')}`);
+            info(`Configuration saved to ${colors.cyan('.dotset/gluon/config.yaml')}`);
             if (cloudProject) {
                 info(`Linked to cloud project: ${colors.green(cloudProject.id)}`);
             }
@@ -167,15 +158,6 @@ program
             console.log(`  Secret Detection: ${config.secrets.enabled ? colors.green('Enabled') : colors.dim('Disabled')}`);
             console.log(`  Network Monitoring: ${config.network.enabled ? colors.green('Enabled') : colors.dim('Disabled')}`);
             console.log(`  Module Tracking: ${config.modules.enabled ? colors.green('Enabled') : colors.dim('Disabled')}`);
-
-            if (axionDetected) {
-                console.log();
-                console.log(colors.magenta('🔗 Axion Detected!'));
-                console.log(`   Gluon will monitor secrets from your Axion manifest.`);
-                if (config.tier === 'free') {
-                    console.log(colors.dim(`   Upgrade to Pro for full Axion integration.`));
-                }
-            }
             console.log();
 
             console.log(colors.bold('📥 Next steps:'));
@@ -185,7 +167,7 @@ program
             console.log();
 
             console.log(colors.yellow('⚠️  Important:'));
-            console.log('   Add .gluon/ to your .gitignore');
+            console.log('   Add .dotset/ to your .gitignore');
         } catch (err) {
             error((err as Error).message);
         }

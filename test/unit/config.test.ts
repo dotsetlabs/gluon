@@ -70,12 +70,12 @@ describe('Config Module', () => {
     });
 
     describe('initConfig', () => {
-        it('should create config file in .gluon directory', async () => {
+        it('should create config file in .dotset/gluon directory', async () => {
             const config = await initConfig('test-project', testDir);
 
             expect(config.projectName).toBe('test-project');
 
-            const configPath = join(testDir, '.gluon', 'config.yaml');
+            const configPath = join(testDir, '.dotset', 'gluon', 'config.yaml');
             const content = await readFile(configPath, 'utf8');
             expect(content).toContain('test-project');
         });

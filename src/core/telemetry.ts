@@ -363,7 +363,7 @@ export class TelemetryCollector {
 
         // Map internal events to API format if necessary
         // Currently they match closely enough
-        await cloudClient.syncTelemetry(this.cloudProjectId, events);
+        await cloudClient.syncTelemetry(this.cloudProjectId, events, { softError: true });
     }
 
     /**

@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import yaml from 'js-yaml';
 
 /** Configuration directory name */
-export const CONFIG_DIR = '.gluon';
+export const CONFIG_DIR = '.dotset/gluon';
 
 /** Configuration filename */
 export const CONFIG_FILENAME = 'config.yaml';
@@ -172,20 +172,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 };
 
 /**
- * Axion integration configuration
- */
-export interface AxionIntegration {
-    /** Whether Axion integration is enabled */
-    enabled: boolean;
-    /** Whether Axion was detected in the project */
-    detected: boolean;
-    /** Path to Axion config directory if detected */
-    configPath?: string;
-    /** Axion project ID if linked */
-    projectId?: string;
-}
-
-/**
  * Complete Gluon project configuration
  */
 export interface GluonConfig {
@@ -214,8 +200,6 @@ export interface GluonConfig {
         apiUrl: string;
         projectId?: string;
     };
-    /** Axion integration settings */
-    axion: AxionIntegration;
 }
 
 /**
@@ -243,17 +227,13 @@ export function createDefaultConfig(projectName?: string): GluonConfig {
         },
         telemetry: {
             enabled: true,
-            storagePath: '.gluon/telemetry.log',
+            storagePath: '.dotset/gluon/telemetry.log',
             bufferSize: 100,
             flushIntervalMs: 5000,
         },
         cloud: {
             enabled: false,
             apiUrl: 'https://api.dotsetlabs.com',
-        },
-        axion: {
-            enabled: false,
-            detected: false,
         },
     };
 }
@@ -324,7 +304,6 @@ export async function loadConfig(workDir: string = process.cwd()): Promise<Gluon
             modules: { ...defaults.modules, ...loaded.modules },
             telemetry: { ...defaults.telemetry, ...loaded.telemetry },
             cloud: { ...defaults.cloud, ...loaded.cloud },
-            axion: { ...defaults.axion, ...loaded.axion },
         };
     } catch (err) {
         if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -372,7 +351,7 @@ export async function initConfig(
     workDir: string = process.cwd()
 ): Promise<GluonConfig> {
     if (await isInitialized(workDir)) {
-        throw new Error('Project already initialized. Delete .gluon/ to reinitialize.');
+        throw new Error('Project already initialized. Delete .dotset/gluon/ to reinitialize.');
     }
 
     const config = createDefaultConfig(projectName);

@@ -47,33 +47,53 @@ export class GluonCloudClient {
     }
 
     /**
-     * Makes an authenticated API request
+     * Internal request handler with soft error support
+     */
+    private async _request<T>(
+        method: string,
+        path: string,
+        body?: unknown,
+        options: { softError?: boolean } = {}
+    ): Promise<T | null> {
+        try {
+            const accessToken = await getAccessToken();
+
+            const response = await fetch(`${this.apiUrl}${path}`, {
+                method,
+                headers: {
+                    ...getBaseHeaders(),
+                    'Authorization': `Bearer ${accessToken}`,
+                },
+                body: body ? JSON.stringify(body) : undefined,
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Request failed' })) as ApiError & { code?: string };
+                if (response.status === 401 && error.code === 'BETA_ACCESS_REQUIRED') {
+                    if (options.softError) return null;
+                    throw new Error('Beta access required. Set DOTSET_BETA_PASSWORD environment variable.');
+                }
+                if (options.softError) return null;
+                throw new Error(error.message || `API error: ${response.status}`);
+            }
+
+            return response.json() as Promise<T>;
+        } catch (err) {
+            if (options.softError) return null;
+            throw err;
+        }
+    }
+
+    /**
+     * Standard request handler (throws on error)
      */
     private async request<T>(
         method: string,
         path: string,
         body?: unknown
     ): Promise<T> {
-        const accessToken = await getAccessToken();
-
-        const response = await fetch(`${this.apiUrl}${path}`, {
-            method,
-            headers: {
-                ...getBaseHeaders(),
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            body: body ? JSON.stringify(body) : undefined,
-        });
-
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: 'Request failed' })) as ApiError & { code?: string };
-            if (response.status === 401 && error.code === 'BETA_ACCESS_REQUIRED') {
-                throw new Error('Beta access required. Set DOTSET_BETA_PASSWORD environment variable.');
-            }
-            throw new Error(error.message || `API error: ${response.status}`);
-        }
-
-        return response.json() as Promise<T>;
+        const result = await this._request<T>(method, path, body);
+        return result!;
     }
 
     /**
@@ -127,24 +147,24 @@ export class GluonCloudClient {
     }
 
     /**
-     * Creates a new project
+     * Creates a new project (with Gluon enabled)
      */
-    async createProject(name: string, axionProjectId?: string): Promise<{ id: string; name: string }> {
-        return this.request('POST', '/gluon/projects', { name, axionProjectId });
+    async createProject(name: string): Promise<{ id: string; name: string }> {
+        return this.request('POST', '/projects', { name, gluonEnabled: true });
     }
 
     /**
      * Gets project details
      */
     async getProject(projectId: string): Promise<{ id: string; name: string }> {
-        return this.request('GET', `/gluon/projects/${projectId}`);
+        return this.request('GET', `/projects/${projectId}`);
     }
 
     /**
-     * Lists user's projects
+     * Lists user's Gluon-enabled projects
      */
     async listProjects(): Promise<Array<{ id: string; name: string }>> {
-        return this.request('GET', '/gluon/projects');
+        return this.request('GET', '/projects?filter=gluon');
     }
 
     /**
@@ -152,32 +172,33 @@ export class GluonCloudClient {
      */
     async syncTelemetry(
         projectId: string,
-        events: unknown[]
-    ): Promise<{ synced: number }> {
-        return this.request('POST', `/gluon/projects/${projectId}/telemetry`, {
+        events: unknown[],
+        options: { softError?: boolean } = {}
+    ): Promise<{ synced: number } | null> {
+        return this._request<{ synced: number }>('POST', `/projects/${projectId}/gluon/telemetry`, {
             events,
-        });
+        }, options);
     }
 
     /**
      * Gets alerts for a project
      */
     async getAlerts(projectId: string): Promise<unknown[]> {
-        return this.request('GET', `/gluon/projects/${projectId}/alerts`);
+        return this.request('GET', `/projects/${projectId}/gluon/alerts`);
     }
 
     /**
      * Acknowledges an alert
      */
     async acknowledgeAlert(projectId: string, alertId: string): Promise<void> {
-        return this.request('POST', `/gluon/projects/${projectId}/alerts/${alertId}/ack`);
+        return this.request('POST', `/projects/${projectId}/gluon/alerts/${alertId}/ack`);
     }
 
     /**
-     * Links to an Axion project
+     * Links to an Axion project (deprecated - use unified projects)
      */
     async linkAxionProject(gluonProjectId: string, axionProjectId: string): Promise<void> {
-        return this.request('POST', `/gluon/projects/${gluonProjectId}/link-axion`, { axionProjectId });
+        return this.request('POST', `/projects/${gluonProjectId}/gluon/link-axion`, { axionProjectId });
     }
 }
 

@@ -6,12 +6,6 @@ Detect secret leaks, track network activity, and monitor runtime behavior withou
 [![npm version](https://img.shields.io/npm/v/@dotsetlabs/gluon)](https://www.npmjs.com/package/@dotsetlabs/gluon)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
----
-
-> **Axion protects your secrets at rest. Gluon watches them in motion.**
-
----
-
 ## Why Gluon?
 
 Existing security tools focus on:
@@ -40,22 +34,22 @@ gln run -- npm start
 # ✓ Credentials in stdout/stderr
 ```
 
-### 2. "Secrets in Motion" Alerts
+### 2. Real-Time Secret Exposure Alerts
 
-When integrated with Axion:
 ```
-⚠️ ALERT: Secret 'STRIPE_SECRET_KEY' from Axion project 'payments-api'
-   was detected in stdout at 2025-01-15 14:32:01 UTC
+⚠️ ALERT: Secret pattern detected in stdout at 2025-01-15 14:32:01 UTC
    
+   Pattern: Stripe Secret Key (sk_live_*)
    Context: ...Processing payment with sk_live_****...
 ```
 
-### 3. Runtime SBOM (Enterprise)
+### 3. Runtime SBOM (Business Tier)
 
 Generate a Software Bill of Materials from **actual runtime imports**:
 
 ```bash
 gln sbom --format cyclonedx > sbom.json
+gln sbom --format spdx > sbom.spdx
 ```
 
 Compliance teams need this. Static SBOMs miss dynamic imports.
@@ -79,7 +73,7 @@ npx @dotsetlabs/gluon run -- npm start
 gln init
 ```
 
-Creates `.gluon/config.yaml` with sensible defaults.
+Creates `.dotset/gluon/config.yaml` with sensible defaults.
 
 ### 3. Run with monitoring
 
@@ -95,6 +89,13 @@ gln run -- python app.py
 gln status
 ```
 
+### 5. Enable cloud sync (optional)
+
+```bash
+gln login           # Authenticate with GitHub/Google
+gln init --cloud    # Create cloud project and link
+```
+
 ## Commands
 
 | Command | Description |
@@ -106,34 +107,13 @@ gln status
 | `gln status --severity <level>` | Filter by severity (info, warning, error, critical) |
 | `gln status --since <duration>` | Filter events from duration ago (e.g., 1h, 24h, 7d) |
 | `gln config` | View or edit configuration |
-| `gln dashboard` | Launch local web dashboard |
 | `gln sbom` | Generate runtime SBOM (Business tier) |
-| `gln login` | Authenticate with Gluon Cloud |
+| `gln sbom --static` | Generate static SBOM from package.json |
+| `gln login` | Authenticate with dotset labs cloud |
+| `gln logout` | Clear credentials |
 | `gln link <projectId>` | Link to a cloud project |
 | `gln unlink` | Unlink from cloud project |
 | `gln push` | Sync local telemetry to cloud |
-
-## Axion Integration
-
-Gluon works seamlessly with [@dotsetlabs/axion](https://github.com/dotsetlabs/axion):
-
-```bash
-# Install both
-npm install -g @dotsetlabs/axion @dotsetlabs/gluon
-
-# Run with Axion secrets + Gluon monitoring
-axn run -- gln run -- npm start
-```
-
-| Product | Role |
-|:--------|:-----|
-| **Axion** | Protects secrets at rest (encryption, storage, sync) |
-| **Gluon** | Monitors secrets in motion (runtime exposure detection) |
-
-When Gluon detects an Axion project (`.axion/` directory):
-- Automatically tracks all ENV values from Axion
-- Provides rich alerts with Axion project context
-- Correlates secret leaks with Axion manifests
 
 ## Pricing
 
@@ -157,7 +137,7 @@ When Gluon detects an Axion project (`.axion/` directory):
 
 ## Configuration
 
-### .gluon/config.yaml
+### .dotset/gluon/config.yaml
 
 ```yaml
 version: "1"
@@ -184,13 +164,9 @@ modules:
 
 telemetry:
   enabled: true
-  storagePath: .gluon/telemetry.log
+  storagePath: .dotset/gluon/telemetry.log
   bufferSize: 100
   flushIntervalMs: 5000
-
-axion:
-  enabled: false
-  detected: false
 ```
 
 ## How It Works
@@ -211,7 +187,7 @@ axion:
 │                    └────────┬────────┘             │
 │                             │                      │
 │                             ▼                      │
-│                    .gluon/telemetry.log            │
+│               .dotset/gluon/telemetry.log          │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -271,20 +247,7 @@ In particle physics, **gluons** are exchange particles that mediate the strong f
 | Never observed alone | Monitors without modifying code |
 | Force gets stronger at distance | Value increases as your app scales |
 
-Part of the **dotset labs** particle physics product family:
-- **Axion** — Protects secrets at rest
-- **Gluon** — Watches secrets in motion
-
-## Roadmap
-
-- [x] Secret detection in stdout/stderr
-- [x] Axion integration detection
-- [x] Tier-based feature gating
-- [x] Network connection monitoring
-- [x] Module/dependency tracking
-- [x] Local web dashboard
-- [x] Gluon Cloud for teams
-- [ ] Multi-language support (Python, Go)
+Part of the **dotset labs** particle physics product family.
 
 ## License
 
@@ -293,4 +256,6 @@ MIT — See [LICENSE](LICENSE)
 ## Related Projects
 
 - [@dotsetlabs/axion](https://github.com/dotsetlabs/axion) — Zero-Disk Secret Plane
+- [@dotsetlabs/tachyon](https://github.com/dotsetlabs/tachyon) — Zero-Trust Tunnels for Teams
+- [@dotsetlabs/cli](https://github.com/dotsetlabs/cli) — Unified CLI for all products
 - [dotset labs](https://dotsetlabs.com) — Developer tools for security, performance, and DX
