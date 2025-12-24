@@ -31,7 +31,7 @@ describe('Gluon CLI Integration Tests', () => {
 
             expect(result.exitCode).toBe(0);
             expect(result.all).toContain('initialized');
-            expect(await project.exists('.gluon/config.yaml')).toBe(true);
+            expect(await project.exists('.dotset/gluon/config.yaml')).toBe(true);
         });
 
         it('should prevent re-initialization', async () => {
@@ -46,7 +46,7 @@ describe('Gluon CLI Integration Tests', () => {
             const result = await project.run('init', '--name', 'my-app');
 
             expect(result.exitCode).toBe(0);
-            const config = await project.readFile('.gluon/config.yaml');
+            const config = await project.readFile('.dotset/gluon/config.yaml');
             expect(config).toContain('my-app');
         });
     });
