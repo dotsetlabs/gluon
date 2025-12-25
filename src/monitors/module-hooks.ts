@@ -17,7 +17,7 @@
 import Module from 'node:module';
 import { dirname, join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
-import { type TelemetryCollector } from '../core/telemetry.js';
+import { type TelemetryCollector } from '../telemetry.js';
 
 // Access internal Module._load via type assertion
 type ModuleLoadFn = (request: string, parent: NodeModule | undefined, isMain: boolean) => unknown;

@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
     SecretsMonitor,
 } from '../../src/monitors/secrets.js';
-import { createDefaultConfig } from '../../src/core/config.js';
+import { createDefaultConfig } from '../../src/config.js';
 
 describe('Secrets Monitor', () => {
     const createMonitor = (configOverrides: Partial<ReturnType<typeof createDefaultConfig>> = {}) => {

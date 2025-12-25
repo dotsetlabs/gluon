@@ -10,7 +10,7 @@ import {
     TelemetryCollector,
     createCollector,
     generateSessionId,
-} from '../../src/core/telemetry.js';
+} from '../../src/telemetry.js';
 
 describe('Telemetry Module', () => {
     let testDir: string;

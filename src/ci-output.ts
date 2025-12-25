@@ -12,7 +12,7 @@
  * - Jenkins, CircleCI, etc.
  */
 
-import { type TelemetryEvent, type EventSeverity } from '../core/telemetry.js';
+import { type TelemetryEvent, type EventSeverity } from './telemetry.js';
 
 /**
  * SARIF severity levels

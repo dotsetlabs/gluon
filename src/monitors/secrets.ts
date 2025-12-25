@@ -15,9 +15,9 @@
  * 3. Contextual analysis: Considers surrounding content for false positive reduction
  */
 
-import { type TelemetryCollector } from '../core/telemetry.js';
-import { type HookManager, type HookContext, type StreamTransformHook } from '../core/hooks.js';
-import { type GluonConfig, type SecretMode } from '../core/config.js';
+import { type TelemetryCollector } from '../telemetry.js';
+import { type HookManager, type HookContext, type StreamTransformHook } from '../hooks.js';
+import { type GluonConfig, type SecretMode } from '../config.js';
 
 /**
  * Secret detection result

@@ -11,8 +11,8 @@
  * - New/unseen destination alerts
  */
 
-import { type TelemetryCollector } from '../core/telemetry.js';
-import { type GluonConfig } from '../core/config.js';
+import { type TelemetryCollector } from '../telemetry.js';
+import { type GluonConfig } from '../config.js';
 
 /**
  * Network connection record

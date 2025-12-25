@@ -12,7 +12,7 @@
 
 import { readFile, writeFile, mkdir, access, constants } from 'node:fs/promises';
 import { join } from 'node:path';
-import yaml from 'js-yaml';
+import yaml from 'yaml';
 
 /** Configuration directory name */
 export const CONFIG_DIR = '.dotset/gluon';
@@ -311,7 +311,7 @@ export async function loadConfig(workDir: string = process.cwd()): Promise<Gluon
 
     try {
         const content = await readFile(configPath, 'utf8');
-        const loaded = yaml.load(content) as Partial<GluonConfig>;
+        const loaded = yaml.parse(content) as Partial<GluonConfig>;
 
         // Merge with defaults to handle missing fields
         const defaults = createDefaultConfig();
@@ -349,10 +349,9 @@ export async function saveConfig(
     await mkdir(configDir, { recursive: true });
 
     // Serialize and write
-    const content = yaml.dump(config, {
+    const content = yaml.stringify(config, {
         indent: 2,
-        lineWidth: 120,
-        sortKeys: false,
+        sortMapEntries: false,
     });
 
     await writeFile(configPath, content, 'utf8');

@@ -14,7 +14,7 @@ import {
     isInitialized,
     getDefaultSecretPatterns,
     compileCustomPatterns,
-} from '../../src/core/config.js';
+} from '../../src/config.js';
 
 describe('Config Module', () => {
     let testDir: string;

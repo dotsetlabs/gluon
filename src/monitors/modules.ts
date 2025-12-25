@@ -13,8 +13,8 @@
 
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { type TelemetryCollector } from '../core/telemetry.js';
-import { type GluonConfig } from '../core/config.js';
+import { type TelemetryCollector } from '../telemetry.js';
+import { type GluonConfig } from '../config.js';
 
 /**
  * Module record

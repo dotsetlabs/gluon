@@ -6,9 +6,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { run, runShell, createRunner } from '../../src/core/runner.js';
-import { createHookManager, type HookContext } from '../../src/core/hooks.js';
-import { createDefaultConfig } from '../../src/core/config.js';
+import { run, runShell, createRunner } from '../../src/runner.js';
+import { createHookManager, type HookContext } from '../../src/hooks.js';
+import { createDefaultConfig } from '../../src/config.js';
 
 describe('Runner Module', () => {
     let testDir: string;

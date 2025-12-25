@@ -1,46 +1,43 @@
 {
   "name": "@dotsetlabs/gluon",
   "version": "1.0.0",
-  "description": "Runtime Security Telemetry for Modern Applications. Detect secret leaks, track network activity, and monitor runtime behavior without changing your code.",
+  "description": "Security SDK for the dotset platform. Runtime telemetry, secret leak detection, and network monitoring.",
   "type": "module",
-  "main": "dist/cli.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/cli.d.ts",
-      "import": "./dist/cli.js"
-    },
-    "./runner": {
-      "types": "./dist/core/runner.d.ts",
-      "import": "./dist/core/runner.js"
-    },
-    "./telemetry": {
-      "types": "./dist/core/telemetry.d.ts",
-      "import": "./dist/core/telemetry.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./monitors": {
       "types": "./dist/monitors/index.d.ts",
       "import": "./dist/monitors/index.js"
     },
-    "./config": {
-      "types": "./dist/core/config.d.ts",
-      "import": "./dist/core/config.js"
-    },
-    "./hooks": {
-      "types": "./dist/core/hooks.d.ts",
-      "import": "./dist/core/hooks.js"
-    },
     "./monitors/secrets": {
       "types": "./dist/monitors/secrets.d.ts",
       "import": "./dist/monitors/secrets.js"
+    },
+    "./telemetry": {
+      "types": "./dist/telemetry.d.ts",
+      "import": "./dist/telemetry.js"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks.d.ts",
+      "import": "./dist/hooks.js"
+    },
+    "./runner": {
+      "types": "./dist/runner.d.ts",
+      "import": "./dist/runner.js"
     }
-  },
-  "bin": {
-    "gln": "./bin/gln.js"
   },
   "files": [
     "dist",
     "!dist/**/*.test.*",
-    "bin",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -48,23 +45,20 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:all": "npm test && npm run test:integration",
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
+    "dotset",
     "security",
     "telemetry",
     "monitoring",
     "runtime",
     "secrets",
-    "observability",
-    "cli",
-    "devtools"
+    "sdk",
+    "library"
   ],
   "author": "dotset labs <hello@dotsetlabs.com>",
   "license": "MIT",
@@ -75,18 +69,16 @@
   "bugs": {
     "url": "https://github.com/dotsetlabs/gluon/issues"
   },
-  "homepage": "https://dotsetlabs.com/gluon",
+  "homepage": "https://dotsetlabs.com",
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "commander": "^12.1.0",
-    "js-yaml": "^4.1.1"
+    "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.2",
-    "execa": "^8.0.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }

@@ -16,7 +16,6 @@
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { type GluonConfig } from './config.js';
-import { cloudClient } from '../cloud/client.js';
 
 /**
  * Severity levels for telemetry events
@@ -356,14 +355,11 @@ export class TelemetryCollector {
     }
 
     /**
-     * Syncs events to Gluon Cloud
+     * Syncs events to cloud (stub - cloud sync handled at CLI layer)
      */
-    private async syncToCloud(events: TelemetryEvent[]): Promise<void> {
-        if (!this.cloudProjectId) return;
-
-        // Map internal events to API format if necessary
-        // Currently they match closely enough
-        await cloudClient.syncTelemetry(this.cloudProjectId, events, { softError: true });
+    private async syncToCloud(_events: TelemetryEvent[]): Promise<void> {
+        // Cloud sync is now handled at the CLI layer using @dotsetlabs/core
+        // This method is a stub for API compatibility
     }
 
     /**

@@ -11,7 +11,7 @@
  * - Severity-based filtering
  */
 
-import { type TelemetryEvent, type EventSeverity } from '../core/telemetry.js';
+import { type TelemetryEvent, type EventSeverity } from './telemetry.js';
 
 /**
  * Webhook payload format
