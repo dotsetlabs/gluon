@@ -20,6 +20,18 @@
     "./monitors": {
       "types": "./dist/monitors/index.d.ts",
       "import": "./dist/monitors/index.js"
+    },
+    "./config": {
+      "types": "./dist/core/config.d.ts",
+      "import": "./dist/core/config.js"
+    },
+    "./hooks": {
+      "types": "./dist/core/hooks.d.ts",
+      "import": "./dist/core/hooks.js"
+    },
+    "./monitors/secrets": {
+      "types": "./dist/monitors/secrets.d.ts",
+      "import": "./dist/monitors/secrets.js"
     }
   },
   "bin": {

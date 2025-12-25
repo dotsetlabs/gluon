@@ -1,8 +1,13 @@
 /**
  * Gluon Secrets Monitor
  *
- * Detects potential secret exposure in application output.
+ * Detects and prevents secret exposure in application output.
  * Scans stdout/stderr streams for patterns matching API keys, tokens, passwords, etc.
+ *
+ * Protection Modes:
+ * - detect: Log exposure but allow output (default)
+ * - redact: Replace secrets with redaction text
+ * - block: Suppress output containing secrets entirely
  *
  * Detection Strategy:
  * 1. Pattern matching: Uses regex patterns for known secret formats
@@ -11,8 +16,8 @@
  */
 
 import { type TelemetryCollector } from '../core/telemetry.js';
-import { type HookManager, type HookContext } from '../core/hooks.js';
-import { type GluonConfig } from '../core/config.js';
+import { type HookManager, type HookContext, type StreamTransformHook } from '../core/hooks.js';
+import { type GluonConfig, type SecretMode } from '../core/config.js';
 
 /**
  * Secret detection result
@@ -69,16 +74,25 @@ const DEFAULT_NAMED_PATTERNS: NamedPattern[] = [
 ];
 
 /**
- * Secrets monitor class
+ * Secrets monitor class with active protection capabilities
  */
 export class SecretsMonitor {
     private patterns: NamedPattern[];
     private trackedEnvValues: Map<string, string> = new Map();
     private telemetry?: TelemetryCollector;
     private enabled: boolean;
+    private mode: SecretMode;
+    private redactText: string;
+    private alertOnExposure: boolean;
+
+    /** Count of detected exposures (for reporting) */
+    private exposureCount: number = 0;
 
     constructor(config: GluonConfig, telemetry?: TelemetryCollector) {
         this.enabled = config.secrets.enabled;
+        this.mode = config.secrets.mode;
+        this.redactText = config.secrets.redactText;
+        this.alertOnExposure = config.secrets.alertOnExposure;
         this.telemetry = telemetry;
 
         // Build pattern list
@@ -105,6 +119,27 @@ export class SecretsMonitor {
     }
 
     /**
+     * Gets the current protection mode
+     */
+    getMode(): SecretMode {
+        return this.mode;
+    }
+
+    /**
+     * Sets the protection mode at runtime
+     */
+    setMode(mode: SecretMode): void {
+        this.mode = mode;
+    }
+
+    /**
+     * Sets the redaction text
+     */
+    setRedactText(text: string): void {
+        this.redactText = text;
+    }
+
+    /**
      * Scans a buffer for potential secrets
      */
     scan(data: Buffer | string, source: 'stdout' | 'stderr' = 'stdout'): SecretMatch[] {
@@ -125,7 +160,7 @@ export class SecretsMonitor {
                     patternName: name,
                     start: match.index,
                     end: match.index + matchedText.length,
-                    redactedSnippet: this.redact(text, match.index, matchedText.length),
+                    redactedSnippet: this.createRedactedSnippet(text, match.index, matchedText.length),
                     matchedText,
                     severity,
                 };
@@ -149,7 +184,7 @@ export class SecretsMonitor {
                     patternName: `ENV:${envVar}`,
                     start: index,
                     end: index + value.length,
-                    redactedSnippet: this.redact(text, index, value.length),
+                    redactedSnippet: this.createRedactedSnippet(text, index, value.length),
                     matchedText: value,
                     severity: 'critical',
                 };
@@ -165,13 +200,64 @@ export class SecretsMonitor {
             }
         }
 
+        // Update exposure count
+        if (matches.length > 0) {
+            this.exposureCount += matches.length;
+        }
+
         return matches;
     }
 
     /**
-     * Redacts sensitive content, keeping context
+     * Transforms a chunk based on the current mode
+     * Returns:
+     * - Original buffer (detect mode or no secrets found)
+     * - Redacted buffer (redact mode with secrets)
+     * - null (block mode with secrets)
      */
-    private redact(text: string, start: number, length: number): string {
+    transform(data: Buffer, source: 'stdout' | 'stderr' = 'stdout'): Buffer | null {
+        if (!this.enabled) return data;
+
+        const matches = this.scan(data, source);
+
+        if (matches.length === 0) {
+            return data; // No secrets, pass through
+        }
+
+        switch (this.mode) {
+            case 'detect':
+                return data; // Allow output
+
+            case 'redact':
+                return this.redactMatches(data, matches);
+
+            case 'block':
+                return null; // Suppress entirely
+        }
+    }
+
+    /**
+     * Replaces matched secrets with redaction text
+     */
+    private redactMatches(data: Buffer, matches: SecretMatch[]): Buffer {
+        let text = data.toString('utf8');
+
+        // Sort matches by start position descending to avoid offset issues
+        const sortedMatches = [...matches].sort((a, b) => b.start - a.start);
+
+        for (const match of sortedMatches) {
+            const before = text.slice(0, match.start);
+            const after = text.slice(match.end);
+            text = before + this.redactText + after;
+        }
+
+        return Buffer.from(text, 'utf8');
+    }
+
+    /**
+     * Creates a redacted snippet for logging/telemetry
+     */
+    private createRedactedSnippet(text: string, start: number, length: number): string {
         const contextBefore = 20;
         const contextAfter = 20;
 
@@ -199,15 +285,26 @@ export class SecretsMonitor {
     /**
      * Adds an environment variable to track
      */
-    trackEnvVar(name: string): void {
-        const value = process.env[name];
-        if (value && value.length >= 8) {
-            this.trackedEnvValues.set(name, value);
+    trackEnvVar(name: string, value?: string): void {
+        const envValue = value ?? process.env[name];
+        if (envValue && envValue.length >= 8) {
+            this.trackedEnvValues.set(name, envValue);
         }
     }
 
     /**
-     * Creates a stream hook for monitoring
+     * Creates a transform hook for the specified stream
+     * This hook modifies output based on the protection mode
+     */
+    createTransformHook(source: 'stdout' | 'stderr'): StreamTransformHook {
+        return (chunk: Buffer): Buffer | null | undefined => {
+            return this.transform(chunk, source);
+        };
+    }
+
+    /**
+     * Creates a stream hook for monitoring (observer - doesn't modify)
+     * @deprecated Use registerHooks() which automatically sets up appropriate hooks
      */
     createStreamHook(source: 'stdout' | 'stderr'): (chunk: Buffer, context: HookContext) => void {
         return (chunk: Buffer) => {
@@ -217,10 +314,18 @@ export class SecretsMonitor {
 
     /**
      * Registers hooks with a hook manager
+     * Uses transform hooks for redact/block modes, observer hooks for detect mode
      */
     registerHooks(hookManager: HookManager): void {
-        hookManager.on('stdout', this.createStreamHook('stdout'));
-        hookManager.on('stderr', this.createStreamHook('stderr'));
+        if (this.mode === 'detect') {
+            // Observer mode: just scan, don't modify
+            hookManager.on('stdout', this.createStreamHook('stdout'));
+            hookManager.on('stderr', this.createStreamHook('stderr'));
+        } else {
+            // Transform mode: scan and modify/block
+            hookManager.onTransform('stdout', this.createTransformHook('stdout'));
+            hookManager.onTransform('stderr', this.createTransformHook('stderr'));
+        }
     }
 
     /**
@@ -235,6 +340,20 @@ export class SecretsMonitor {
      */
     getTrackedEnvCount(): number {
         return this.trackedEnvValues.size;
+    }
+
+    /**
+     * Gets the total number of exposures detected
+     */
+    getExposureCount(): number {
+        return this.exposureCount;
+    }
+
+    /**
+     * Gets whether alerts should be shown on exposure
+     */
+    shouldAlertOnExposure(): boolean {
+        return this.alertOnExposure;
     }
 }
 

@@ -43,6 +43,14 @@ const DEFAULT_SECRET_PATTERNS = [
 ];
 
 /**
+ * Secret protection mode
+ * - detect: Log exposure but allow output (default)
+ * - redact: Replace secrets with redaction text
+ * - block: Suppress output containing secrets entirely
+ */
+export type SecretMode = 'detect' | 'redact' | 'block';
+
+/**
  * Secret pattern configuration
  */
 export interface SecretPattern {
@@ -181,9 +189,17 @@ export interface GluonConfig {
     projectName: string;
     /** Current subscription tier */
     tier: SubscriptionTier;
-    /** Secret detection settings */
+    /** Secret detection and prevention settings */
     secrets: {
+        /** Whether secret monitoring is enabled */
         enabled: boolean;
+        /** Protection mode: detect, redact, or block */
+        mode: SecretMode;
+        /** Text to replace secrets with in redact mode */
+        redactText: string;
+        /** Whether to show alerts even in redact/block modes */
+        alertOnExposure: boolean;
+        /** Custom patterns to detect */
         customPatterns: SecretPattern[];
         /** Environment variable names to track (values are sensitive) */
         trackedEnvVars: string[];
@@ -212,6 +228,9 @@ export function createDefaultConfig(projectName?: string): GluonConfig {
         tier: 'free',
         secrets: {
             enabled: true,
+            mode: 'detect',
+            redactText: '[REDACTED]',
+            alertOnExposure: true,
             customPatterns: [],
             trackedEnvVars: [],
         },
