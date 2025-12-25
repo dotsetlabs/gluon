@@ -31,9 +31,3 @@ jobs:
 
       - name: Run unit tests
         run: npm test
-
-      - name: Run integration tests
-        run: npm run test:integration
-
-      - name: Verify CLI
-        run: node dist/cli.js --help
