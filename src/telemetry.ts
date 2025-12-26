@@ -55,6 +55,8 @@ export interface TelemetryEvent {
     pid?: number;
     /** Session ID for correlating events */
     sessionId: string;
+    /** Environment scope (development, staging, production) */
+    scope: string;
     /** Whether the event has been synced to the cloud */
     synced?: boolean;
 }
@@ -142,6 +144,7 @@ export class TelemetryCollector {
     private flushIntervalMs: number;
     private enabled: boolean;
     private cloudProjectId?: string;
+    private scope: string = 'development';
 
     constructor(config: GluonConfig['telemetry'], sessionId?: string) {
         this.sessionId = sessionId ?? generateSessionId();
@@ -160,6 +163,13 @@ export class TelemetryCollector {
      */
     setCloudProjectId(projectId: string): void {
         this.cloudProjectId = projectId;
+    }
+
+    /**
+     * Sets the environment scope
+     */
+    setScope(scope: string): void {
+        this.scope = scope;
     }
 
     /**
@@ -213,6 +223,7 @@ export class TelemetryCollector {
             metadata,
             pid: process.pid,
             sessionId: this.sessionId,
+            scope: this.scope,
         };
 
         if (this.enabled) {
