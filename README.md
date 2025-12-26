@@ -93,6 +93,7 @@ Full documentation: [docs.dotsetlabs.com/gluon](https://docs.dotsetlabs.com/gluo
 Gluon is the Security module of the dotset developer platform:
 - **Axion** — Zero-disk encrypted secrets
 - **Gluon** — Runtime security telemetry *(this package)*
+- **Hadron** — Local CI runner
 - **Tachyon** — Zero-trust dev tunnels
 
 ## License
