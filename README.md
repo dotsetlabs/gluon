@@ -52,6 +52,7 @@ const matches = monitor.scan(outputBuffer, 'stdout');
 
 - **Secret Leak Detection** — Monitor stdout/stderr for exposed secrets
 - **Network Monitoring** — Track all outbound HTTP/HTTPS connections
+- **Unified Audit Logging** — Tamper-proof logs for all security detections and blocks
 - **Module Tracking** — Monitor runtime dependencies
 - **SBOM Generation** — CycloneDX and SPDX format support
 - **Three Protection Modes** — Detect, redact, or block secret exposure
