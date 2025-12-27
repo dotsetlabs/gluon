@@ -33,6 +33,7 @@ export type EventType =
     | 'process_stop'
     | 'process_error'
     | 'config_change'
+    | 'http_interaction'
     | 'custom';
 
 /**
@@ -113,6 +114,21 @@ export interface ModuleLoadEvent extends TelemetryEvent {
 }
 
 /**
+ * HTTP interaction event for Lagrangian
+ */
+export interface HttpInteractionEvent extends TelemetryEvent {
+    type: 'http_interaction';
+    metadata: {
+        method: string;
+        path: string;
+        headers: Record<string, string>;
+        body?: string;
+        statusCode: number;
+        durationMs?: number;
+    };
+}
+
+/**
  * Generates a unique event ID
  */
 function generateEventId(): string {
@@ -144,14 +160,30 @@ export class TelemetryCollector {
     private flushIntervalMs: number;
     private enabled: boolean;
     private cloudProjectId?: string;
+    private cloudAccessToken?: string;
+    private cloudApiUrl?: string;
     private scope: string = 'development';
+    private redactionList: string[] = ['authorization', 'cookie', 'set-cookie', 'x-api-key', 'proxy-authorization'];
+    private lagrangianConfig?: GluonConfig['lagrangian'];
 
-    constructor(config: GluonConfig['telemetry'], sessionId?: string) {
+    constructor(config: GluonConfig['telemetry'], lagrangianConfig?: GluonConfig['lagrangian'], sessionId?: string) {
         this.sessionId = sessionId ?? generateSessionId();
         this.storagePath = config.storagePath;
         this.bufferSize = config.bufferSize;
         this.flushIntervalMs = config.flushIntervalMs;
         this.enabled = config.enabled;
+
+        // Auto-configure from environment if available
+        this.cloudProjectId = process.env.GLUON_CLOUD_PROJECT_ID;
+        this.cloudAccessToken = process.env.GLUON_CLOUD_ACCESS_TOKEN;
+        this.cloudApiUrl = process.env.GLUON_API_URL || 'https://api.dotsetlabs.com';
+
+        if (lagrangianConfig) {
+            this.lagrangianConfig = lagrangianConfig;
+            if (lagrangianConfig.ignoredHeaders) {
+                this.redactionList = [...new Set([...this.redactionList, ...lagrangianConfig.ignoredHeaders.map(h => h.toLowerCase())])];
+            }
+        }
 
         if (this.enabled && this.flushIntervalMs > 0) {
             this.startFlushTimer();
@@ -298,6 +330,71 @@ export class TelemetryCollector {
     }
 
     /**
+     * Records an HTTP interaction (Lagrangian)
+     */
+    recordHttpInteraction(
+        method: string,
+        path: string,
+        headers: Record<string, string>,
+        statusCode: number,
+        body?: string,
+        durationMs?: number
+    ): HttpInteractionEvent | null {
+        // Respect Lagrangian configuration
+        if (this.lagrangianConfig && !this.lagrangianConfig.enabled) return null;
+
+        // Check if path is ignored
+        if (this.lagrangianConfig?.ignoredPaths?.some(p => path.startsWith(p))) {
+            return null;
+        }
+
+        // Redact sensitive headers
+        const sanitizedHeaders: Record<string, string> = {};
+        for (const [key, value] of Object.entries(headers)) {
+            if (this.redactionList.includes(key.toLowerCase())) {
+                sanitizedHeaders[key] = '[REDACTED]';
+            } else {
+                sanitizedHeaders[key] = value;
+            }
+        }
+
+        // Redact body if it looks like it contains sensitive data (simple check for now)
+        let sanitizedBody = body;
+        if (this.lagrangianConfig && !this.lagrangianConfig.captureBodies) {
+            sanitizedBody = '[BODY CAPTURE DISABLED]';
+        } else if (body && (body.includes('"password"') || body.includes('"token"') || body.includes('"secret"'))) {
+            try {
+                const parsed = JSON.parse(body);
+                const redactKeys = ['password', 'token', 'secret', 'key', 'apiKey'];
+                const redactRecursive = (obj: any) => {
+                    if (typeof obj !== 'object' || obj === null) return;
+                    for (const k of Object.keys(obj)) {
+                        if (redactKeys.some(rk => k.toLowerCase().includes(rk))) {
+                            obj[k] = '[REDACTED]';
+                        } else {
+                            redactRecursive(obj[k]);
+                        }
+                    }
+                };
+                redactRecursive(parsed);
+                sanitizedBody = JSON.stringify(parsed);
+            } catch {
+                // Not JSON, skip redaction for now
+                sanitizedBody = '[REDACTED BODY (POTENTIALLY SENSITIVE)]';
+            }
+        }
+
+        const event = this.record(
+            'http_interaction',
+            `HTTP ${method} ${path} (${statusCode})`,
+            { method, path, headers: sanitizedHeaders, body: sanitizedBody, statusCode, durationMs },
+            statusCode >= 500 ? 'critical' : 'info'
+        ) as HttpInteractionEvent;
+
+        return event;
+    }
+
+    /**
      * Records process start
      */
     recordProcessStart(command: string, args: string[]): TelemetryEvent {
@@ -324,7 +421,7 @@ export class TelemetryCollector {
     /**
      * Flushes buffered events to storage
      */
-    async asyncFlush(): Promise<number> {
+    async flush(): Promise<number> {
         if (this.buffer.length === 0) return 0;
 
         const events = [...this.buffer];
@@ -332,7 +429,7 @@ export class TelemetryCollector {
 
         try {
             // Optional: Sync to cloud if project is linked
-            if (this.cloudProjectId) {
+            if (this.cloudProjectId && this.cloudAccessToken) {
                 try {
                     await this.syncToCloud(events);
                     // Mark as synced if successful
@@ -359,18 +456,34 @@ export class TelemetryCollector {
     }
 
     /**
-     * Wrapper for flush to maintain backward compatibility and handle async properly
+     * Syncs events to cloud
      */
-    async flush(): Promise<number> {
-        return this.asyncFlush();
-    }
+    private async syncToCloud(events: TelemetryEvent[]): Promise<void> {
+        if (!this.cloudProjectId || !this.cloudAccessToken) return;
 
-    /**
-     * Syncs events to cloud (stub - cloud sync handled at CLI layer)
-     */
-    private async syncToCloud(_events: TelemetryEvent[]): Promise<void> {
-        // Cloud sync is now handled at the CLI layer using @dotsetlabs/core
-        // This method is a stub for API compatibility
+        // Separate Lagrangian events from others
+        const lagrangianEvents = events.filter(e => e.type === 'http_interaction');
+
+        if (lagrangianEvents.length > 0) {
+            try {
+                const url = `${this.cloudApiUrl}/projects/${this.cloudProjectId}/lagrangian`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.cloudAccessToken}`
+                    },
+                    body: JSON.stringify({ events: lagrangianEvents })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error(`[Gluon] Lagrangian cloud sync failed: ${response.status} ${errText}`);
+                }
+            } catch (err) {
+                console.error('[Gluon] Network error during Lagrangian sync:', (err as Error).message);
+            }
+        }
     }
 
     /**
@@ -398,6 +511,10 @@ export class TelemetryCollector {
 
         return unsyncedEvents.length;
     }
+
+    /**
+     * Reads all events from storage
+     */
     async readEvents(limit?: number): Promise<TelemetryEvent[]> {
         try {
             const content = await readFile(this.storagePath, 'utf8');
@@ -466,7 +583,8 @@ export class TelemetryCollector {
  */
 export function createCollector(
     config: GluonConfig['telemetry'],
+    lagrangianConfig?: GluonConfig['lagrangian'],
     sessionId?: string
 ): TelemetryCollector {
-    return new TelemetryCollector(config, sessionId);
+    return new TelemetryCollector(config, lagrangianConfig, sessionId);
 }

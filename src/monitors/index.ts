@@ -30,3 +30,8 @@ export {
     type LoadedModule,
     type SBOMComponent,
 } from './module-hooks.js';
+
+export {
+    installServerHooks,
+    removeServerHooks,
+} from './server-hooks.js';

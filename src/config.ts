@@ -103,6 +103,20 @@ export interface TelemetryConfig {
 }
 
 /**
+ * Lagrangian (Crash Replay) configuration
+ */
+export interface LagrangianConfig {
+    /** Whether crash replay capture is enabled */
+    enabled: boolean;
+    /** Whether to capture request bodies (can track sensitive data) */
+    captureBodies: boolean;
+    /** Headers to ignore (redact) */
+    ignoredHeaders: string[];
+    /** URL paths to ignore completely */
+    ignoredPaths: string[];
+}
+
+/**
  * Subscription tier type
  */
 export type SubscriptionTier = 'free' | 'pro' | 'business';
@@ -216,6 +230,8 @@ export interface GluonConfig {
         apiUrl: string;
         projectId?: string;
     };
+    /** Lagrangian settings */
+    lagrangian: LagrangianConfig;
 }
 
 /**
@@ -253,6 +269,12 @@ export function createDefaultConfig(projectName?: string): GluonConfig {
         cloud: {
             enabled: false,
             apiUrl: 'https://api.dotsetlabs.com',
+        },
+        lagrangian: {
+            enabled: true,
+            captureBodies: true,
+            ignoredHeaders: ['authorization', 'cookie', 'set-cookie', 'x-api-key'],
+            ignoredPaths: [],
         },
     };
 }
@@ -323,6 +345,7 @@ export async function loadConfig(workDir: string = process.cwd()): Promise<Gluon
             modules: { ...defaults.modules, ...loaded.modules },
             telemetry: { ...defaults.telemetry, ...loaded.telemetry },
             cloud: { ...defaults.cloud, ...loaded.cloud },
+            lagrangian: { ...defaults.lagrangian, ...loaded.lagrangian },
         };
     } catch (err) {
         if ((err as NodeJS.ErrnoException).code === 'ENOENT') {

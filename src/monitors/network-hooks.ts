@@ -14,9 +14,13 @@
  * @module monitors/network-hooks
  */
 
-import * as http from 'node:http';
-import * as https from 'node:https';
-import * as net from 'node:net';
+import type * as httpType from 'node:http';
+import type * as netType from 'node:net';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const http = require('node:http');
+const https = require('node:https');
+const net = require('node:net');
 import { URL } from 'node:url';
 import { type NetworkMonitor, parseUrl } from './network.js';
 
@@ -43,8 +47,8 @@ const monitors = new Set<NetworkMonitor>();
  * Extracts host, port, and protocol from http/https request options
  */
 function extractRequestInfo(
-    urlOrOptions: string | URL | http.RequestOptions,
-    options?: http.RequestOptions,
+    urlOrOptions: string | URL | httpType.RequestOptions,
+    options?: httpType.RequestOptions,
     protocol: 'http' | 'https' = 'http'
 ): { host: string; port: number; protocol: string; path: string } | null {
     try {
@@ -129,13 +133,13 @@ function createRequestWrapper(
     // Use function declaration to preserve `this` binding
     const wrapped = function (
         this: unknown,
-        urlOrOptions: string | URL | http.RequestOptions,
-        optionsOrCallback?: http.RequestOptions | ((res: http.IncomingMessage) => void),
-        callback?: (res: http.IncomingMessage) => void
-    ): http.ClientRequest {
+        urlOrOptions: string | URL | httpType.RequestOptions,
+        optionsOrCallback?: httpType.RequestOptions | ((res: httpType.IncomingMessage) => void),
+        callback?: (res: httpType.IncomingMessage) => void
+    ): httpType.ClientRequest {
         // Parse the arguments
-        let options: http.RequestOptions | undefined;
-        let cb: ((res: http.IncomingMessage) => void) | undefined;
+        let options: httpType.RequestOptions | undefined;
+        let cb: ((res: httpType.IncomingMessage) => void) | undefined;
 
         if (typeof optionsOrCallback === 'function') {
             cb = optionsOrCallback;
@@ -167,13 +171,13 @@ function createGetWrapper(
 ): typeof http.get {
     const wrapped = function (
         this: unknown,
-        urlOrOptions: string | URL | http.RequestOptions,
-        optionsOrCallback?: http.RequestOptions | ((res: http.IncomingMessage) => void),
-        callback?: (res: http.IncomingMessage) => void
-    ): http.ClientRequest {
+        urlOrOptions: string | URL | httpType.RequestOptions,
+        optionsOrCallback?: httpType.RequestOptions | ((res: httpType.IncomingMessage) => void),
+        callback?: (res: httpType.IncomingMessage) => void
+    ): httpType.ClientRequest {
         // Parse the arguments
-        let options: http.RequestOptions | undefined;
-        let cb: ((res: http.IncomingMessage) => void) | undefined;
+        let options: httpType.RequestOptions | undefined;
+        let cb: ((res: httpType.IncomingMessage) => void) | undefined;
 
         if (typeof optionsOrCallback === 'function') {
             cb = optionsOrCallback;
@@ -202,7 +206,7 @@ function createGetWrapper(
 function createNetConnectWrapper(
     original: typeof net.connect
 ): typeof net.connect {
-    const wrapped = function (this: unknown, ...args: unknown[]): net.Socket {
+    const wrapped = function (this: unknown, ...args: unknown[]): netType.Socket {
         // Parse connection options
         let host: string | undefined;
         let port: number | undefined;
@@ -216,7 +220,7 @@ function createNetConnectWrapper(
             // net.connect(path) - Unix socket, skip
         } else if (typeof firstArg === 'object' && firstArg !== null) {
             // net.connect(options, callback?)
-            const opts = firstArg as net.NetConnectOpts;
+            const opts = firstArg as netType.NetConnectOpts;
             if ('port' in opts) {
                 port = opts.port;
                 host = opts.host ?? 'localhost';

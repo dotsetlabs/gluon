@@ -29,7 +29,7 @@ npm install @dotsetlabs/gluon
 ### With CLI
 
 ```bash
-dotset init --gluon
+dotset init
 dotset run -- npm start           # Monitor for leaks
 dotset scan                       # Static analysis
 dotset sbom --static              # Generate SBOM
@@ -95,7 +95,7 @@ Gluon is the Security module of the dotset developer platform:
 - **Axion** — Zero-disk encrypted secrets
 - **Gluon** — Runtime security telemetry *(this package)*
 - **Hadron** — Local CI runner
-- **Tachyon** — Zero-trust dev tunnels
+- **Lagrangian** — Instant crash replay
 
 ## License
 

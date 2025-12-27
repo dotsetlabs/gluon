@@ -33,6 +33,10 @@
     "./runner": {
       "types": "./dist/runner.d.ts",
       "import": "./dist/runner.js"
+    },
+    "./auto": {
+      "types": "./dist/auto.d.ts",
+      "import": "./dist/auto.js"
     }
   },
   "files": [

@@ -231,7 +231,7 @@ describe('Telemetry Module', () => {
                 flushIntervalMs: 0,
             };
 
-            const collector = createCollector(config, 'ses_custom_id');
+            const collector = createCollector(config, undefined, 'ses_custom_id');
 
             expect(collector.getSessionId()).toBe('ses_custom_id');
         });
