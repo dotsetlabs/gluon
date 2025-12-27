@@ -16,7 +16,8 @@
 
 // Re-export core types and classes
 export { HookManager } from './hooks.js';
-export { TelemetryCollector } from './telemetry.js';
+export { TelemetryCollector, createCollector, type HttpInteractionEvent, type TelemetryEvent, type EventType } from './telemetry.js';
+export { type GluonConfig, type LagrangianConfig } from './config.js';
 
 // Re-export monitors
 export {

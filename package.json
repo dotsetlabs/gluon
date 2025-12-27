@@ -1,6 +1,6 @@
 {
   "name": "@dotsetlabs/gluon",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Security SDK for the dotset platform. Runtime telemetry, secret leak detection, and network monitoring.",
   "type": "module",
   "main": "dist/index.js",
